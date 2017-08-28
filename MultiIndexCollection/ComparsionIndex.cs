@@ -1,19 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using FastExpressionCompiler;
 
 namespace MultiIndexCollection
 {
-    internal class ComparsionIndex<T, TProperty> : PropertyIndex<T, TProperty>, IComparsionIndex<T>
+    internal class ComparsionIndex<T, TProperty> : IComparsionIndex<T>
     {
         // TODO: implement
         // TODO: store items with `null` key
 
+        public string MemberName { get; }
+
+        readonly Func<T, TProperty> _getKey;
+
         /// <exception cref="NotSupportedException" />
         public ComparsionIndex(Expression<Func<T, TProperty>> lambda)
-            : base(lambda)
         {
-            throw new NotImplementedException();
+            var memberExpression = lambda.Body as MemberExpression;
+
+            if (memberExpression == null || memberExpression.NodeType != ExpressionType.MemberAccess)
+            {
+                throw new NotSupportedException($"Expression {lambda} is not a Member Access");
+            }
+
+            MemberName = memberExpression.Member.Name;
+
+            _getKey = lambda.CompileFast();
+        }
+
+        public object GetKey(T item)
+        {
+            return _getKey.Invoke(item);
         }
 
         public IEnumerable<T> Filter(object key)

@@ -2,20 +2,38 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using FastExpressionCompiler;
 
 namespace MultiIndexCollection
 {
-    internal class EqualityIndex<T, TProperty> : PropertyIndex<T, TProperty>, IEqualityIndex<T>
+    internal class EqualityIndex<T, TProperty> : Dictionary<TProperty, object>, IEqualityIndex<T>
     {
-        private object _nullBucket;
+        public string MemberName { get; }
 
-        readonly Dictionary<TProperty, object> _buckets;
+        readonly Func<T, TProperty> _getKey;
+
+        private object _nullBucket;
+        
+        const int MaxListBucketCount = 16;
 
         /// <exception cref="NotSupportedException" />
         public EqualityIndex(Expression<Func<T, TProperty>> lambda)
-            : base(lambda)
         {
-            _buckets = new Dictionary<TProperty, object>();
+            var memberExpression = lambda.Body as MemberExpression;
+
+            if (memberExpression == null || memberExpression.NodeType != ExpressionType.MemberAccess)
+            {
+                throw new NotSupportedException($"Expression {lambda} is not a Member Access");
+            }
+
+            MemberName = memberExpression.Member.Name;
+
+            _getKey = lambda.CompileFast();
+        }
+
+        public object GetKey(T item)
+        {
+            return _getKey.Invoke(item);
         }
 
         public IEnumerable<T> Filter(object key)
@@ -29,7 +47,7 @@ namespace MultiIndexCollection
                         : (IEnumerable<T>)_nullBucket;
                 }
             }
-            else if (_buckets.TryGetValue((TProperty)key, out object bucket))
+            else if (TryGetValue((TProperty)key, out object bucket))
             {
                 return bucket is T element
                     ? new[] { element }
@@ -49,7 +67,7 @@ namespace MultiIndexCollection
                 }
                 else if (_nullBucket is List<T> list)
                 {
-                    if (list.Count < 16)
+                    if (list.Count < MaxListBucketCount)
                     {
                         list.Add(item);
                     }
@@ -72,21 +90,21 @@ namespace MultiIndexCollection
 
             var propKey = (TProperty)key;
 
-            if (_buckets.TryGetValue(propKey, out object bucket))
+            if (TryGetValue(propKey, out object bucket))
             {
                 if (bucket is T element)
                 {
-                    _buckets[propKey] = new List<T>(2) { element, item };
+                    base[propKey] = new List<T>(2) { element, item };
                 }
                 else if (bucket is List<T> list)
                 {
-                    if (list.Count < 16)
+                    if (list.Count < MaxListBucketCount)
                     {
                         list.Add(item);
                     }
                     else
                     {
-                        _buckets[propKey] = new HashSet<T>(list) { item };
+                        base[propKey] = new HashSet<T>(list) { item };
                     }
                 }
                 else if (bucket is HashSet<T> hashSet)
@@ -96,7 +114,7 @@ namespace MultiIndexCollection
             }
             else
             {
-                _buckets.Add(propKey, item);
+                base.Add(propKey, item);
             }
         }
 
@@ -108,7 +126,7 @@ namespace MultiIndexCollection
                 {
                     hashSet.Remove(item);
 
-                    if (hashSet.Count == 16)
+                    if (hashSet.Count == MaxListBucketCount)
                     {
                         _nullBucket = new List<T>(hashSet);
                     }
@@ -132,11 +150,11 @@ namespace MultiIndexCollection
 
             var propKey = (TProperty)key;
 
-            object bucket = _buckets[propKey];
+            object bucket = base[propKey];
 
             if (bucket is T)
             {
-                _buckets.Remove(propKey);
+                Remove(propKey);
             }
             else if (bucket is List<T> list)
             {
@@ -144,24 +162,25 @@ namespace MultiIndexCollection
 
                 if (list.Count == 1)
                 {
-                    _buckets[propKey] = list[0];
+                    base[propKey] = list[0];
                 }
             }
             else if (bucket is HashSet<T> hashSet)
             {
                 hashSet.Remove(item);
 
-                if (hashSet.Count == 16)
+                if (hashSet.Count == MaxListBucketCount)
                 {
-                    _buckets[propKey] = new List<T>(hashSet);
+                    base[propKey] = new List<T>(hashSet);
                 }
             }
         }
 
-        public void Clear()
+        public new void Clear()
         {
+            base.Clear();
+
             _nullBucket = null;
-            _buckets.Clear();
         }
     }
 }
