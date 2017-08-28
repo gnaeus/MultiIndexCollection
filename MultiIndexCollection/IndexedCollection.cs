@@ -69,7 +69,7 @@ namespace MultiIndexCollection
             return this;
         }
 
-        #region IEnumerable Indexed Methods
+        #region LINQ Methods
 
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />
