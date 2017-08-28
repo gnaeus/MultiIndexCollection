@@ -8,7 +8,7 @@ namespace MultiIndexCollection
     {
         /// <summary>
         /// Make <see cref="IndexedCollection{T}"/> from <paramref name="enumerable"/>. It provides
-        /// fast indexed search by using <see cref="IndexedCollection{T}.Filter(Expression{Func{T, bool}})"/>
+        /// fast indexed search by using <see cref="IndexedCollection{T}.Where(Expression{Func{T, bool}})"/>
         /// </summary>
         /// <exception cref="NotSupportedException" />
         public static IndexedCollection<TSource> IndexBy<TSource, TProperty>(

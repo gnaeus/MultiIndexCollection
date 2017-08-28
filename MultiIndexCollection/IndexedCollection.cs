@@ -31,7 +31,7 @@ namespace MultiIndexCollection
 
             _storage = enumerable.ToDictionary(item => item, _ => new List<object>(2));
         }
-
+        
         /// <exception cref="NotSupportedException" />
         public IndexedCollection<T> IndexBy<TProperty>(
             Expression<Func<T, TProperty>> property, bool isSorted = false)
@@ -64,14 +64,95 @@ namespace MultiIndexCollection
             return this;
         }
 
+        public IEnumerable<T> AsEnumerable()
+        {
+            return this;
+        }
+
+        #region IEnumerable Indexed Methods
+
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />
-        public IEnumerable<T> Filter(Expression<Func<T, bool>> predicate)
+        public T First(Expression<Func<T, bool>> predicate)
+        {
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+
+            return Filter(predicate.Body).First();
+        }
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public T FirstOrDefault(Expression<Func<T, bool>> predicate)
+        {
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+
+            return Filter(predicate.Body).FirstOrDefault();
+        }
+
+        // TODO: maybe GroupBy ?
+        // TODO: maybe GroupJoin ?
+        // TODO: maybe Join ?
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public T Last(Expression<Func<T, bool>> predicate)
+        {
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+
+            return Filter(predicate.Body).Last();
+        }
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public T LastOrDefault(Expression<Func<T, bool>> predicate)
+        {
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+
+            return Filter(predicate.Body).LastOrDefault();
+        }
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public long LongCount(Expression<Func<T, bool>> predicate)
+        {
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+
+            return Filter(predicate.Body).LongCount();
+        }
+
+        // TODO: maybe OrderBy ?
+        // TODO: maybe OrderByDescending ?
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public T Single(Expression<Func<T, bool>> predicate)
+        {
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+
+            return Filter(predicate.Body).Single();
+        }
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public T SingleOrDefault(Expression<Func<T, bool>> predicate)
+        {
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+
+            return Filter(predicate.Body).SingleOrDefault();
+        }
+
+        // TODO: maybe ToLookup ?
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public IEnumerable<T> Where(Expression<Func<T, bool>> predicate)
         {
             if (predicate == null) throw new ArgumentNullException(nameof(predicate));
 
             return Filter(predicate.Body);
         }
+
+        #endregion
 
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />
