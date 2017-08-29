@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 
 namespace MultiIndexCollection
 {
-    public class IndexedCollection<T> : ICollection<T>
+    public class IndexedCollection<T> : ICollection<T>, IReadOnlyCollection<T>, ICollection
     {
         readonly List<IEqualityIndex<T>> _indexes;
 
@@ -14,7 +14,11 @@ namespace MultiIndexCollection
 
         public int Count => _storage.Count;
 
-        public bool IsReadOnly => false;
+        bool ICollection<T>.IsReadOnly => false;
+
+        bool ICollection.IsSynchronized => false;
+
+        object ICollection.SyncRoot => ((ICollection)_storage).SyncRoot;
 
         public IndexedCollection()
         {
@@ -317,6 +321,11 @@ namespace MultiIndexCollection
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        void ICollection.CopyTo(Array array, int index)
+        {
+            ((ICollection)_storage.Keys).CopyTo(array, index);
         }
     }
 }
