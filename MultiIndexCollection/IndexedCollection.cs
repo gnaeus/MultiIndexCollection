@@ -35,23 +35,42 @@ namespace MultiIndexCollection
 
             _storage = enumerable.ToDictionary(item => item, _ => new List<object>(2));
         }
-        
+
+        #region Indexing
+
         /// <exception cref="NotSupportedException" />
         public IndexedCollection<T> IndexBy<TProperty>(
             Expression<Func<T, TProperty>> property, bool isSorted = false)
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
 
-            IEqualityIndex<T> index;
             if (isSorted)
             {
-                index = new ComparsionIndex<T, TProperty>(property);
+                IndexBy(new ComparsionIndex<T, TProperty>(property));
             }
             else
             {
-                index = new EqualityIndex<T, TProperty>(property);
+                IndexBy(new EqualityIndex<T, TProperty>(property));
             }
+            
+            return this;
+        }
 
+        /// <exception cref="NotSupportedException" />
+        public IndexedCollection<T> IndexByIgnoreCase(Expression<Func<T, string>> property)
+        {
+            if (property == null) throw new ArgumentNullException(nameof(property));
+
+            var comparer = new ComparsionIndex<T, string>
+                .KeyValueComparer(StringComparer.OrdinalIgnoreCase);
+
+            IndexBy(new ComparsionIndex<T, string>(property, comparer));
+
+            return this;
+        }
+
+        private void IndexBy(IEqualityIndex<T> index)
+        {
             foreach (var pair in _storage)
             {
                 T item = pair.Key;
@@ -64,16 +83,16 @@ namespace MultiIndexCollection
             }
 
             _indexes.Add(index);
-
-            return this;
         }
+
+        #endregion
+        
+        #region LINQ Methods
 
         public IEnumerable<T> AsEnumerable()
         {
             return this;
         }
-
-        #region LINQ Methods
 
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />
@@ -124,6 +143,8 @@ namespace MultiIndexCollection
             return Filter(predicate.Body).LongCount();
         }
 
+        // TODO: maybe Max ?
+        // TODO: maybe Min ?
         // TODO: maybe OrderBy ?
         // TODO: maybe OrderByDescending ?
 
@@ -158,39 +179,46 @@ namespace MultiIndexCollection
 
         #endregion
 
+        #region Filtering
+
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />
         private IEnumerable<T> Filter(Expression node)
         {
-            var expression = node as BinaryExpression;
+            if (node is MethodCallExpression methodCall)
+            {
+                return FilterStringStartsWith(methodCall);
+            }
 
-            if (expression == null)
+            var binary = node as BinaryExpression;
+
+            if (binary == null)
             {
                 throw new NotSupportedException(
                     $"Predicate body {node} should be Binary Expression");
             }
 
-            switch (expression.NodeType)
+            switch (binary.NodeType)
             {
                 case ExpressionType.OrElse:
-                    return Filter(expression.Left).Union(Filter(expression.Right));
+                    return Filter(binary.Left).Union(Filter(binary.Right));
 
                 case ExpressionType.AndAlso:
-                    return Filter(expression.Left).Intersect(Filter(expression.Right));
+                    return FilterRangeOrAndAlso(binary.Left, binary.Right);
 
                 case ExpressionType.Equal:
                     return FilterEquality(
-                        expression.Left.GetMemberName(),
-                        expression.Right.GetValue());
+                        binary.Left.GetMemberName(),
+                        binary.Right.GetValue());
 
                 case ExpressionType.GreaterThan:
                 case ExpressionType.GreaterThanOrEqual:
                 case ExpressionType.LessThan:
                 case ExpressionType.LessThanOrEqual:
                     return FilterComparsion(
-                        expression.Left.GetMemberName(),
-                        expression.Right.GetValue(),
-                        expression.NodeType);
+                        binary.Left.GetMemberName(),
+                        binary.Right.GetValue(),
+                        binary.NodeType);
 
                 default:
                     throw new NotSupportedException(
@@ -224,9 +252,163 @@ namespace MultiIndexCollection
                 throw new InvalidOperationException($"There is no comparsion index for property '{memberName}'");
             }
 
-            return index.Filter(key, type);
+            switch (type)
+            {
+                case ExpressionType.GreaterThan:
+                    return index.GreaterThan(key, exclusive: true);
+
+                case ExpressionType.GreaterThanOrEqual:
+                    return index.GreaterThan(key, exclusive: false);
+
+                case ExpressionType.LessThan:
+                    return index.LessThan(key, exclusive: true);
+
+                case ExpressionType.LessThanOrEqual:
+                    return index.LessThan(key, exclusive: false);
+
+                default:
+                    throw new InvalidOperationException($"Expression {type} should be Comparsion");
+            }
         }
         
+        /// <exception cref="InvalidOperationException" />
+        private IEnumerable<T> FilterRangeOrAndAlso(
+            Expression leftNode, Expression rightNode)
+        {
+            var left = leftNode as BinaryExpression;
+
+            if (left == null)
+            {
+                throw new NotSupportedException(
+                    $"Predicate body {leftNode} should be Binary Expression");
+            }
+
+            var right = rightNode as BinaryExpression;
+
+            if (right == null)
+            {
+                throw new NotSupportedException(
+                    $"Predicate body {rightNode} should be Binary Expression");
+            }
+
+            string leftMemberName = left.Left.GetMemberName();
+            string rightMemberName = right.Left.GetMemberName();
+
+            if (leftMemberName == rightMemberName)
+            {
+                IComparsionIndex<T> index = _indexes
+                    .OfType<IComparsionIndex<T>>()
+                    .FirstOrDefault(i => i.MemberName == leftMemberName);
+
+                if (index != null)
+                {
+                    switch (left.NodeType)
+                    {
+                        case ExpressionType.GreaterThan:
+                            switch (right.NodeType)
+                            {
+                                case ExpressionType.LessThan:
+                                    return index.Between(
+                                        left.Right.GetValue(), true,
+                                        right.Right.GetValue(), true);
+                                
+                                case ExpressionType.LessThanOrEqual:
+                                    return index.Between(
+                                        left.Right.GetValue(), true,
+                                        right.Right.GetValue(), false);
+                            }
+                            break;
+
+                        case ExpressionType.GreaterThanOrEqual:
+                            switch (right.NodeType)
+                            {
+                                case ExpressionType.LessThan:
+                                    return index.Between(
+                                        left.Right.GetValue(), false,
+                                        right.Right.GetValue(), true);
+
+                                case ExpressionType.LessThanOrEqual:
+                                    return index.Between(
+                                        left.Right.GetValue(), false,
+                                        right.Right.GetValue(), false);
+                            }
+                            break;
+
+                        case ExpressionType.LessThan:
+                            switch (right.NodeType)
+                            {
+                                case ExpressionType.GreaterThan:
+                                    return index.Between(
+                                        right.Right.GetValue(), true,
+                                        left.Right.GetValue(), true);
+
+                                case ExpressionType.GreaterThanOrEqual:
+                                    return index.Between(
+                                        right.Right.GetValue(), false,
+                                        left.Right.GetValue(), true);
+                            }
+                            break;
+
+                        case ExpressionType.LessThanOrEqual:
+                            switch (right.NodeType)
+                            {
+                                case ExpressionType.GreaterThan:
+                                    return index.Between(
+                                        right.Right.GetValue(), true,
+                                        left.Right.GetValue(), false);
+
+                                case ExpressionType.GreaterThanOrEqual:
+                                    return index.Between(
+                                        right.Right.GetValue(), false,
+                                        left.Right.GetValue(), false);
+                            }
+                            break;
+                    }
+                }
+            }
+            
+            return Filter(leftNode).Intersect(Filter(rightNode));
+        }
+        
+        public IEnumerable<T> FilterStringStartsWith(MethodCallExpression methodCall)
+        {
+            if (methodCall.Method.DeclaringType == typeof(String) &&
+                methodCall.Method.Name == nameof(String.StartsWith))
+            {
+                string memberName = methodCall.Object.GetMemberName();
+
+                IComparsionIndex<T> index = _indexes
+                    .OfType<IComparsionIndex<T>>()
+                    .FirstOrDefault(i => i.MemberName == memberName);
+
+                if (index == null)
+                {
+                    throw new InvalidOperationException(
+                        $"There is no comparsion index for property '{memberName}'");
+                }
+
+                string keyFrom = (string)methodCall.Arguments.First().GetValue();
+
+                if (String.IsNullOrEmpty(keyFrom))
+                {
+                    return index.GreaterThan(keyFrom, false);
+                }
+
+                char lastChar = keyFrom[keyFrom.Length - 1];
+
+                string keyTo = keyFrom.Substring(0, keyFrom.Length - 1) + (char)(lastChar + 1);
+
+                return index.Between(keyFrom, false, keyTo, true);
+            }
+
+            throw new NotSupportedException(
+                $"Predicate body {methodCall} should be String.StartsWith");
+        }
+
+        #endregion
+
+        #region Updating
+
         public void Add(T item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
@@ -302,6 +484,8 @@ namespace MultiIndexCollection
             }
             _storage.Clear();
         }
+
+        #endregion
 
         public bool Contains(T item)
         {

@@ -24,5 +24,23 @@ namespace MultiIndexCollection
 
             return collection.IndexBy(property, isSorted);
         }
+
+        /// <summary>
+        /// Make <see cref="IndexedCollection{T}"/> from <paramref name="enumerable"/>. It provides
+        /// fast indexed search by using <see cref="IndexedCollection{T}.Where(Expression{Func{T, bool}})"/>
+        /// </summary>
+        /// <exception cref="NotSupportedException" />
+        public static IndexedCollection<TSource> IndexByIgnoreCase<TSource>(
+            this IEnumerable<TSource> enumerable,
+            Expression<Func<TSource, string>> property)
+        {
+            if (enumerable == null) throw new ArgumentNullException(nameof(enumerable));
+            if (property == null) throw new ArgumentNullException(nameof(property));
+
+            var collection = enumerable as IndexedCollection<TSource>
+                ?? new IndexedCollection<TSource>(enumerable);
+
+            return collection.IndexByIgnoreCase(property);
+        }
     }
 }

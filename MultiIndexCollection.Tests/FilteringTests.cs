@@ -87,25 +87,81 @@ namespace MultiIndexCollection.Tests
         [TestMethod]
         public void WhereGreaterThan()
         {
-            throw new NotImplementedException();
+            var users = new[]
+            {
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Fred", Age = 30 },
+                new User { Name = "Alice", Age = 30 },
+            };
+
+            var expected = users.Where(u => u.Age > 20);
+
+            var indexed = users
+                .IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age > 20);
+
+            Assert.That.SetEquals(expected, actual);
         }
 
         [TestMethod]
         public void WhereGreaterThanOrEqual()
         {
-            throw new NotImplementedException();
+            var users = new[]
+            {
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Fred", Age = 30 },
+                new User { Name = "Alice", Age = 30 },
+            };
+
+            var expected = users.Where(u => u.Age >= 30);
+
+            var indexed = users
+                .IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age >= 30);
+
+            Assert.That.SetEquals(expected, actual);
         }
 
         [TestMethod]
         public void WhereLessThan()
         {
-            throw new NotImplementedException();
+            var users = new[]
+            {
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Fred", Age = 30 },
+                new User { Name = "Alice", Age = 30 },
+            };
+
+            var expected = users.Where(u => u.Age < 30);
+
+            var indexed = users
+                .IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age < 30);
+
+            Assert.That.SetEquals(expected, actual);
         }
 
         [TestMethod]
         public void WhereLessThanOrEqual()
         {
-            throw new NotImplementedException();
+            var users = new[]
+            {
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Fred", Age = 30 },
+                new User { Name = "Alice", Age = 30 },
+            };
+
+            var expected = users.Where(u => u.Age <= 20);
+
+            var indexed = users
+                .IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age <= 20);
+
+            Assert.That.SetEquals(expected, actual);
         }
 
         [TestMethod]
@@ -153,13 +209,61 @@ namespace MultiIndexCollection.Tests
         [TestMethod]
         public void WhereBeetween()
         {
-            throw new NotImplementedException();
+            var users = new[]
+            {
+                new User { Name = "John", Age = 15 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Bob", Age = 35 },
+                new User { Name = "Sara", Age = 40 },
+            };
+
+            var expected = users.Where(u => u.Age >= 20 && u.Age <= 35);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age >= 20 && u.Age <= 35);
+
+            Assert.That.SetEquals(expected, actual);
         }
 
         [TestMethod]
         public void WhereStringStartsWith()
         {
-            throw new NotImplementedException();
+            var users = new[]
+            {
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Bob", Age = 35 },
+                new User { Name = "Bill", Age = 40 },
+            };
+
+            var expected = users.Where(u => u.Name.StartsWith("B"));
+
+            var indexed = users.IndexBy(u => u.Name, true);
+
+            var actual = indexed.Where(u => u.Name.StartsWith("B"));
+
+            Assert.That.SetEquals(expected, actual);
+        }
+
+        [TestMethod]
+        public void WhereStringStartsWithIgnoreCase()
+        {
+            var users = new[]
+            {
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "bob", Age = 35 },
+                new User { Name = "Bill", Age = 40 },
+            };
+
+            var expected = users.Where(u => u.Name
+                .StartsWith("B", StringComparison.InvariantCultureIgnoreCase));
+
+            var indexed = users.IndexByIgnoreCase(u => u.Name);
+
+            var actual = indexed.Where(u => u.Name.StartsWith("B"));
+
+            Assert.That.SetEquals(expected, actual);
         }
     }
 }

@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
-using System.Linq.Expressions;
 
 namespace MultiIndexCollection
 {
     internal interface IComparsionIndex<T> : IEqualityIndex<T>
     {
-        IEnumerable<T> Filter(object key, ExpressionType type);
+        IEnumerable<T> GreaterThan(object key, bool exclusive);
+
+        IEnumerable<T> LessThan(object key, bool exclusive);
+
+        IEnumerable<T> Between(object keyFrom, bool excludeFrom, object keyTo, bool excludeTo);
     }
 }
