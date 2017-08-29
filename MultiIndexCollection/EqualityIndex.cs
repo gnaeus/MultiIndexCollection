@@ -150,28 +150,29 @@ namespace MultiIndexCollection
 
             var propKey = (TProperty)key;
 
-            object bucket = base[propKey];
-
-            if (bucket is T)
+            if (TryGetValue(propKey, out object bucket))
             {
-                Remove(propKey);
-            }
-            else if (bucket is List<T> list)
-            {
-                list.Remove(item);
-
-                if (list.Count == 1)
+                if (bucket is T)
                 {
-                    base[propKey] = list[0];
+                    Remove(propKey);
                 }
-            }
-            else if (bucket is HashSet<T> hashSet)
-            {
-                hashSet.Remove(item);
-
-                if (hashSet.Count == MaxListBucketCount)
+                else if (bucket is List<T> list)
                 {
-                    base[propKey] = new List<T>(hashSet);
+                    list.Remove(item);
+
+                    if (list.Count == 1)
+                    {
+                        base[propKey] = list[0];
+                    }
+                }
+                else if (bucket is HashSet<T> hashSet)
+                {
+                    hashSet.Remove(item);
+
+                    if (hashSet.Count == MaxListBucketCount)
+                    {
+                        base[propKey] = new List<T>(hashSet);
+                    }
                 }
             }
         }

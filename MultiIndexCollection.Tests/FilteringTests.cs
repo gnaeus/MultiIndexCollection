@@ -30,7 +30,20 @@ namespace MultiIndexCollection.Tests
         [TestMethod]
         public void WhereSortedEquals()
         {
-            throw new NotImplementedException();
+            var users = new[]
+            {
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Fred", Age = 30 },
+                new User { Name = "Alice", Age = 20 },
+            };
+
+            var expected = users.Where(u => u.Age == 20);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age == 20);
+
+            Assert.That.SetEquals(expected, actual);
         }
 
         [TestMethod]
@@ -55,7 +68,20 @@ namespace MultiIndexCollection.Tests
         [TestMethod]
         public void WhereSortedIsNull()
         {
-            throw new NotImplementedException();
+            var users = new[]
+            {
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Fred", Age = 30 },
+                new User { Name = "Alice", Age = null },
+            };
+
+            var expected = users.Where(u => u.Age == null);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age == null);
+
+            Assert.That.SetEquals(expected, actual);
         }
 
         [TestMethod]
@@ -85,13 +111,43 @@ namespace MultiIndexCollection.Tests
         [TestMethod]
         public void WhereAndAlso()
         {
-            throw new NotImplementedException();
+            var users = new[]
+            {
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Fred", Age = 30 },
+                new User { Name = "John", Age = 30 },
+            };
+
+            var expected = users.Where(u => u.Name == "John" && u.Age == 30);
+
+            var indexed = users
+                .IndexBy(u => u.Name)
+                .IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Name == "John" && u.Age == 30);
+
+            Assert.That.SetEquals(expected, actual);
         }
 
         [TestMethod]
         public void WhereOrElse()
         {
-            throw new NotImplementedException();
+            var users = new[]
+            {
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Fred", Age = 30 },
+                new User { Name = "John", Age = 30 },
+            };
+
+            var expected = users.Where(u => u.Name == "John" || u.Age == 30).ToArray();
+
+            var indexed = users
+                .IndexBy(u => u.Name)
+                .IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Name == "John" || u.Age == 30).ToArray();
+
+            Assert.That.SetEquals(expected, actual);
         }
 
         [TestMethod]
