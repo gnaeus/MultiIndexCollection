@@ -2,7 +2,7 @@
 
 namespace MultiIndexCollection
 {
-    internal interface IComparsionIndex<T> : IEqualityIndex<T>
+    internal interface IComparsionIndex<T> : IEqualityIndex<T>, IEnumerable<T>
     {
         IEnumerable<T> GreaterThan(object key, bool exclusive);
 
@@ -13,6 +13,8 @@ namespace MultiIndexCollection
         IEnumerable<T> HavingMin();
 
         IEnumerable<T> HavingMax();
+
+        IEnumerable<T> Reverse();
 
         /// <exception cref="InvalidOperationException" />
         object Min();

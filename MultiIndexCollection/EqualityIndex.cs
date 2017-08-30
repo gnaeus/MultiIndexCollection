@@ -177,9 +177,9 @@ namespace MultiIndexCollection
             }
         }
 
-        public new void Clear()
+        void IEqualityIndex<T>.Clear()
         {
-            base.Clear();
+            Clear();
 
             _nullBucket = null;
         }

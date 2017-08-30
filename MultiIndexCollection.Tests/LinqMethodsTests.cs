@@ -84,5 +84,47 @@ namespace MultiIndexCollection.Tests
 
             Assert.AreEqual(minAge, actual);
         }
+
+        [TestMethod]
+        public void OrderBy()
+        {
+            var users = new[]
+            {
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "John", Age = 15 },
+                new User { Name = "Sara", Age = 40 },
+                new User { Name = "Bob", Age = 35 },
+            };
+
+            var expected = users.OrderBy(u => u.Age);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.OrderBy(u => u.Age);
+
+            Assert.That.SequenceEquals(expected, actual);
+        }
+
+        [TestMethod]
+        public void OrderByDescending()
+        {
+            var users = new[]
+            {
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "John", Age = 15 },
+                new User { Name = "Sara", Age = 40 },
+                new User { Name = "Bob", Age = 35 },
+            };
+
+            var expected = users.OrderByDescending(u => u.Age);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.OrderByDescending(u => u.Age);
+
+            Assert.That.SequenceEquals(expected, actual);
+        }
     }
 }

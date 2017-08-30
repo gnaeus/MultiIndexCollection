@@ -202,10 +202,25 @@ namespace MultiIndexCollection
 
             return (TProperty)index.Min();
         }
-        
-        // TODO: maybe OrderBy ?
-        // TODO: maybe OrderByDescending ?
 
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public IEnumerable<T> OrderBy<TProperty>(Expression<Func<T, TProperty>> property)
+        {
+            if (property == null) throw new ArgumentNullException(nameof(property));
+
+            return GetComparsionIndex(property.Body);   
+        }
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public IEnumerable<T> OrderByDescending<TProperty>(Expression<Func<T, TProperty>> property)
+        {
+            if (property == null) throw new ArgumentNullException(nameof(property));
+
+            return GetComparsionIndex(property.Body).Reverse();
+        }
+        
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />
         public T Single(Expression<Func<T, bool>> predicate)

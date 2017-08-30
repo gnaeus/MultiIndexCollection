@@ -79,12 +79,12 @@ namespace MultiIndexCollection
         
         public IEnumerable<T> GreaterThan(object key, bool exclusive)
         {
-            return Between(key, exclusive, base.Max.Key, false);
+            return Between(key, exclusive, Max.Key, false);
         }
 
         public IEnumerable<T> LessThan(object key, bool exclusive)
         {
-            return Between(base.Min.Key, false, key, exclusive);
+            return Between(Min.Key, false, key, exclusive);
         }
 
         public IEnumerable<T> Between(object keyFrom, bool excludeFrom, object keyTo, bool excludeTo)
@@ -122,7 +122,7 @@ namespace MultiIndexCollection
         
         public IEnumerable<T> HavingMin()
         {
-            object bucket = base.Min.Value;
+            object bucket = Min.Value;
 
             if (bucket != null)
             {
@@ -136,7 +136,7 @@ namespace MultiIndexCollection
 
         public IEnumerable<T> HavingMax()
         {
-            object bucket = base.Max.Value;
+            object bucket = Max.Value;
 
             if (bucket != null)
             {
@@ -149,25 +149,25 @@ namespace MultiIndexCollection
         }
 
         /// <exception cref="InvalidOperationException" />
-        public new object Min()
+        object IComparsionIndex<T>.Min()
         {
             if (Count == 0)
             {
                 throw new InvalidOperationException("Sequence contains no elements");
             }
 
-            return base.Min.Key;
+            return Min.Key;
         }
 
         /// <exception cref="InvalidOperationException" />
-        public new object Max()
+        object IComparsionIndex<T>.Max()
         {
             if (Count == 0)
             {
                 throw new InvalidOperationException("Sequence contains no elements");
             }
 
-            return base.Max.Key;
+            return Max.Key;
         }
 
         public void Add(object key, T item)
@@ -302,11 +302,47 @@ namespace MultiIndexCollection
             }
         }
 
-        public new void Clear()
+        void IEqualityIndex<T>.Clear()
         {
-            base.Clear();
+            Clear();
 
             _nullBucket = null;
+        }
+
+        IEnumerable<T> IComparsionIndex<T>.Reverse()
+        {
+            foreach (var pair in Reverse())
+            {
+                if (pair.Value is T element)
+                {
+                    yield return element;
+                }
+                else
+                {
+                    foreach (T item in (IEnumerable<T>)pair.Value)
+                    {
+                        yield return item;
+                    }
+                }
+            }
+        }
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            foreach (var pair in this)
+            {
+                if (pair.Value is T element)
+                {
+                    yield return element;
+                }
+                else
+                {
+                    foreach (T item in (IEnumerable<T>)pair.Value)
+                    {
+                        yield return item;
+                    }
+                }
+            }
         }
 
         static readonly KeyValueComparer DefaultComparer = new KeyValueComparer(Comparer<TProperty>.Default);
