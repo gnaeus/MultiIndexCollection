@@ -17,7 +17,7 @@ namespace MultiIndexCollection
         const int MaxListBucketCount = 16;
 
         /// <exception cref="NotSupportedException" />
-        public ComparsionIndex(Expression<Func<T, TProperty>> lambda, KeyValueComparer comparer)
+        protected ComparsionIndex(Expression<Func<T, TProperty>> lambda, KeyValueComparer comparer)
             : base(comparer)
         {
             var memberExpression = lambda.Body as MemberExpression;
@@ -31,10 +31,16 @@ namespace MultiIndexCollection
 
             _getKey = lambda.CompileFast();
         }
-
+        
         /// <exception cref="NotSupportedException" />
         public ComparsionIndex(Expression<Func<T, TProperty>> lambda)
             : this(lambda, DefaultComparer)
+        {
+        }
+
+        /// <exception cref="NotSupportedException" />
+        public ComparsionIndex(Expression<Func<T, TProperty>> lambda, IComparer<TProperty> comparer)
+            : this(lambda, new KeyValueComparer(comparer))
         {
         }
 
@@ -73,12 +79,12 @@ namespace MultiIndexCollection
         
         public IEnumerable<T> GreaterThan(object key, bool exclusive)
         {
-            return Between(key, exclusive, Max.Key, false);
+            return Between(key, exclusive, base.Max.Key, false);
         }
 
         public IEnumerable<T> LessThan(object key, bool exclusive)
         {
-            return Between(Min.Key, false, key, exclusive);
+            return Between(base.Min.Key, false, key, exclusive);
         }
 
         public IEnumerable<T> Between(object keyFrom, bool excludeFrom, object keyTo, bool excludeTo)
@@ -90,12 +96,12 @@ namespace MultiIndexCollection
 
             if (excludeFrom)
             {
-                range = range.SkipWhile(pair => Object.Equals(pair.Key, keyFrom));
+                range = range.SkipWhile(pair => Equals(pair.Key, keyFrom));
             }
 
             if (excludeTo)
             {
-                range = range.TakeWhile(pair => !Object.Equals(pair.Key, keyTo));
+                range = range.TakeWhile(pair => !Equals(pair.Key, keyTo));
             }
 
             foreach (var pair in range)
@@ -112,6 +118,56 @@ namespace MultiIndexCollection
                     }
                 }
             }
+        }
+        
+        public IEnumerable<T> HavingMin()
+        {
+            object bucket = base.Min.Value;
+
+            if (bucket != null)
+            {
+                return bucket is T element
+                    ? new[] { element }
+                    : (IEnumerable<T>)bucket;
+            }
+
+            return Enumerable.Empty<T>();
+        }
+
+        public IEnumerable<T> HavingMax()
+        {
+            object bucket = base.Max.Value;
+
+            if (bucket != null)
+            {
+                return bucket is T element
+                    ? new[] { element }
+                    : (IEnumerable<T>)bucket;
+            }
+
+            return Enumerable.Empty<T>();
+        }
+
+        /// <exception cref="InvalidOperationException" />
+        public new object Min()
+        {
+            if (Count == 0)
+            {
+                throw new InvalidOperationException("Sequence contains no elements");
+            }
+
+            return base.Min.Key;
+        }
+
+        /// <exception cref="InvalidOperationException" />
+        public new object Max()
+        {
+            if (Count == 0)
+            {
+                throw new InvalidOperationException("Sequence contains no elements");
+            }
+
+            return base.Max.Key;
         }
 
         public void Add(object key, T item)

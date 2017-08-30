@@ -9,5 +9,15 @@ namespace MultiIndexCollection
         IEnumerable<T> LessThan(object key, bool exclusive);
 
         IEnumerable<T> Between(object keyFrom, bool excludeFrom, object keyTo, bool excludeTo);
+        
+        IEnumerable<T> HavingMin();
+
+        IEnumerable<T> HavingMax();
+
+        /// <exception cref="InvalidOperationException" />
+        object Min();
+
+        /// <exception cref="InvalidOperationException" />
+        object Max();
     }
 }
