@@ -6,7 +6,8 @@ using System.Linq;
 
 namespace MultiIndexCollection
 {
-    internal class ComparsionIndex<T, TProperty> : SortedSet<KeyValuePair<TProperty, object>>, IComparsionIndex<T>
+    internal class ComparsionIndex<T, TProperty> : SortedSet<KeyValuePair<TProperty, object>>,
+        IComparsionIndex<T>, ILookup<TProperty, T>
     {
         public string MemberName { get; }
 
@@ -342,6 +343,48 @@ namespace MultiIndexCollection
                         yield return item;
                     }
                 }
+            }
+        }
+
+        IEnumerable<T> ILookup<TProperty, T>.this[TProperty key]
+        {
+            get
+            {
+                if (key == null)
+                {
+                    return new BucketGrouping<TProperty, T>((TProperty)(object)null, _nullBucket);
+                }
+
+                var pairKey = new KeyValuePair<TProperty, object>(key, null);
+
+                object bucket = GetViewBetween(pairKey, pairKey).FirstOrDefault().Value;
+
+                if (bucket != null)
+                {
+                    return new BucketGrouping<TProperty, T>(key, bucket);
+                }
+
+                return Enumerable.Empty<T>();
+            }
+        }
+
+        bool ILookup<TProperty, T>.Contains(TProperty key)
+        {
+            return key == null
+                ? _nullBucket != null
+                : Contains(new KeyValuePair<TProperty, object>(key, null));
+        }
+
+        IEnumerator<IGrouping<TProperty, T>> IEnumerable<IGrouping<TProperty, T>>.GetEnumerator()
+        {
+            foreach (var pair in this)
+            {
+                yield return new BucketGrouping<TProperty, T>(pair);
+            }
+
+            if (_nullBucket != null)
+            {
+                yield return new BucketGrouping<TProperty, T>((TProperty)(object)null, _nullBucket);
             }
         }
 

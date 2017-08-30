@@ -239,7 +239,26 @@ namespace MultiIndexCollection
             return Filter(predicate.Body).SingleOrDefault();
         }
 
-        // TODO: maybe ToLookup ?
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public ILookup<TProperty, T> ToLookup<TProperty>(Expression<Func<T, TProperty>> property)
+        {
+            if (property == null) throw new ArgumentNullException(nameof(property));
+
+            string memberName = property.Body.GetMemberName();
+
+            ILookup<TProperty, T> lookup = _indexes
+                .Where(i => i.MemberName == memberName)
+                .OfType<ILookup<TProperty, T>>()
+                .FirstOrDefault();
+
+            if (lookup == null)
+            {
+                throw new InvalidOperationException($"There is no index for property '{memberName}'");
+            }
+
+            return lookup;
+        }
 
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />

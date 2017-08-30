@@ -126,5 +126,63 @@ namespace MultiIndexCollection.Tests
 
             Assert.That.SequenceEquals(expected, actual);
         }
+
+        [TestMethod]
+        public void ToLookup()
+        {
+            var users = new[]
+            {
+                new User { Name = "Alice", Age = null },
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Sara", Age = 30 },
+                new User { Name = "Ted", Age = null },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Bob", Age = 30 },
+            };
+
+            var expected = users.ToLookup(u => u.Age).OrderBy(g => g.Key);
+
+            var indexed = users.IndexBy(u => u.Age);
+
+            var actual = indexed.ToLookup(u => u.Age).OrderBy(g => g.Key);
+
+            Assert.That.SequenceEquals(
+                expected.Select(g => g.Key),
+                actual.Select(g => g.Key));
+
+            expected
+                .Zip(actual, (exp, act) => new { exp, act })
+                .ToList()
+                .ForEach(pair => Assert.That.SetEquals(pair.exp, pair.act));
+        }
+
+        [TestMethod]
+        public void ToLookupSorted()
+        {
+            var users = new[]
+            {
+                new User { Name = "Alice", Age = null },
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Sara", Age = 30 },
+                new User { Name = "Ted", Age = null },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Bob", Age = 30 },
+            };
+
+            var expected = users.ToLookup(u => u.Age).OrderBy(g => g.Key);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.ToLookup(u => u.Age).OrderBy(g => g.Key);
+
+            Assert.That.SequenceEquals(
+                expected.Select(g => g.Key),
+                actual.Select(g => g.Key));
+
+            expected
+                .Zip(actual, (exp, act) => new { exp, act })
+                .ToList()
+                .ForEach(pair => Assert.That.SetEquals(pair.exp, pair.act));
+        }
     }
 }

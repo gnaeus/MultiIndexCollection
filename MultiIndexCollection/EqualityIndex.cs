@@ -6,10 +6,11 @@ using FastExpressionCompiler;
 
 namespace MultiIndexCollection
 {
-    internal class EqualityIndex<T, TProperty> : Dictionary<TProperty, object>, IEqualityIndex<T>
+    internal class EqualityIndex<T, TProperty> : Dictionary<TProperty, object>,
+        IEqualityIndex<T>, ILookup<TProperty, T>
     {
         public string MemberName { get; }
-
+        
         readonly Func<T, TProperty> _getKey;
 
         private object _nullBucket;
@@ -182,6 +183,42 @@ namespace MultiIndexCollection
             Clear();
 
             _nullBucket = null;
+        }
+
+        IEnumerable<T> ILookup<TProperty, T>.this[TProperty key]
+        {
+            get
+            {
+                if (key == null)
+                {
+                    return new BucketGrouping<TProperty, T>((TProperty)(object)null, _nullBucket);
+                }
+
+                if (TryGetValue(key, out object bucket))
+                {
+                    return new BucketGrouping<TProperty, T>(key, bucket);
+                }
+
+                return Enumerable.Empty<T>();
+            }
+        }
+
+        bool ILookup<TProperty, T>.Contains(TProperty key)
+        {
+            return key == null ? _nullBucket != null : ContainsKey(key);
+        }
+
+        IEnumerator<IGrouping<TProperty, T>> IEnumerable<IGrouping<TProperty, T>>.GetEnumerator()
+        {
+            foreach (var pair in this)
+            {
+                yield return new BucketGrouping<TProperty, T>(pair);
+            }
+
+            if (_nullBucket != null)
+            {
+                yield return new BucketGrouping<TProperty, T>((TProperty)(object)null, _nullBucket);
+            }
         }
     }
 }
