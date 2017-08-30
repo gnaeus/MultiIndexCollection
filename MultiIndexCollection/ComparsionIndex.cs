@@ -352,16 +352,25 @@ namespace MultiIndexCollection
             {
                 if (key == null)
                 {
-                    return new BucketGrouping<TProperty, T>((TProperty)(object)null, _nullBucket);
+                    if (_nullBucket != null)
+                    {
+                        return _nullBucket is T element
+                            ? new[] { element }
+                            : (IEnumerable<T>)_nullBucket;
+                    }
                 }
-
-                var pairKey = new KeyValuePair<TProperty, object>(key, null);
-
-                object bucket = GetViewBetween(pairKey, pairKey).FirstOrDefault().Value;
-
-                if (bucket != null)
+                else
                 {
-                    return new BucketGrouping<TProperty, T>(key, bucket);
+                    var pairKey = new KeyValuePair<TProperty, object>(key, null);
+
+                    object bucket = GetViewBetween(pairKey, pairKey).FirstOrDefault().Value;
+
+                    if (bucket != null)
+                    {
+                        return bucket is T element
+                            ? new[] { element }
+                            : (IEnumerable<T>)bucket;
+                    }
                 }
 
                 return Enumerable.Empty<T>();

@@ -140,20 +140,27 @@ namespace MultiIndexCollection.Tests
                 new User { Name = "Bob", Age = 30 },
             };
 
-            var expected = users.ToLookup(u => u.Age).OrderBy(g => g.Key);
+            var expected = users.ToLookup(u => u.Age);
 
             var indexed = users.IndexBy(u => u.Age);
 
-            var actual = indexed.ToLookup(u => u.Age).OrderBy(g => g.Key);
+            var actual = indexed.ToLookup(u => u.Age);
+
+            Assert.That.SetEquals(expected[20], actual[20]);
+            Assert.That.SetEquals(expected[30], actual[30]);
+            Assert.That.SetEquals(expected[null], actual[null]);
 
             Assert.That.SequenceEquals(
-                expected.Select(g => g.Key),
-                actual.Select(g => g.Key));
+                expected.OrderBy(g => g.Key).Select(g => g.Key),
+                actual.OrderBy(g => g.Key).Select(g => g.Key));
 
             expected
-                .Zip(actual, (exp, act) => new { exp, act })
+                .OrderBy(g => g.Key)
+                .Zip(actual.OrderBy(g => g.Key),
+                    (exp, act) => new { exp, act })
                 .ToList()
-                .ForEach(pair => Assert.That.SetEquals(pair.exp, pair.act));
+                .ForEach(pair => Assert.That
+                    .SetEquals(pair.exp, pair.act));
         }
 
         [TestMethod]
@@ -169,20 +176,27 @@ namespace MultiIndexCollection.Tests
                 new User { Name = "Bob", Age = 30 },
             };
 
-            var expected = users.ToLookup(u => u.Age).OrderBy(g => g.Key);
+            var expected = users.ToLookup(u => u.Age);
 
             var indexed = users.IndexBy(u => u.Age, true);
 
-            var actual = indexed.ToLookup(u => u.Age).OrderBy(g => g.Key);
+            var actual = indexed.ToLookup(u => u.Age);
+
+            Assert.That.SetEquals(expected[20], actual[20]);
+            Assert.That.SetEquals(expected[30], actual[30]);
+            Assert.That.SetEquals(expected[null], actual[null]);
 
             Assert.That.SequenceEquals(
-                expected.Select(g => g.Key),
-                actual.Select(g => g.Key));
+                expected.OrderBy(g => g.Key).Select(g => g.Key),
+                actual.OrderBy(g => g.Key).Select(g => g.Key));
 
             expected
-                .Zip(actual, (exp, act) => new { exp, act })
+                .OrderBy(g => g.Key)
+                .Zip(actual.OrderBy(g => g.Key),
+                    (exp, act) => new { exp, act })
                 .ToList()
-                .ForEach(pair => Assert.That.SetEquals(pair.exp, pair.act));
+                .ForEach(pair => Assert.That
+                    .SetEquals(pair.exp, pair.act));
         }
     }
 }

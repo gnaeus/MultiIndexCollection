@@ -191,12 +191,18 @@ namespace MultiIndexCollection
             {
                 if (key == null)
                 {
-                    return new BucketGrouping<TProperty, T>((TProperty)(object)null, _nullBucket);
+                    if (_nullBucket != null)
+                    {
+                        return _nullBucket is T element
+                            ? new[] { element }
+                            : (IEnumerable<T>)_nullBucket;
+                    }
                 }
-
-                if (TryGetValue(key, out object bucket))
+                else if (TryGetValue(key, out object bucket))
                 {
-                    return new BucketGrouping<TProperty, T>(key, bucket);
+                    return bucket is T element
+                        ? new[] { element }
+                        : (IEnumerable<T>)bucket;
                 }
 
                 return Enumerable.Empty<T>();
