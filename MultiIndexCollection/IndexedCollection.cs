@@ -90,9 +90,8 @@ namespace MultiIndexCollection
         {
             string memberName = memberExpression.GetMemberName();
 
-            IComparsionIndex<T> index = _indexes
-                .OfType<IComparsionIndex<T>>()
-                .FirstOrDefault(i => i.MemberName == memberName);
+            var index = (IComparsionIndex<T>)_indexes
+                .Find(i => i.MemberName == memberName && i is IComparsionIndex<T>);
 
             if (index == null)
             {
@@ -109,10 +108,8 @@ namespace MultiIndexCollection
         {
             string memberName = memberExpression.GetMemberName();
 
-            ILookup<TProperty, T> lookup = _indexes
-                .Where(i => i.MemberName == memberName)
-                .OfType<ILookup<TProperty, T>>()
-                .FirstOrDefault();
+            var lookup = (ILookup<TProperty, T>)_indexes
+                .Find(i => i.MemberName == memberName && i is ILookup<TProperty, T>);
 
             if (lookup == null)
             {
@@ -334,7 +331,7 @@ namespace MultiIndexCollection
         {
             string memberName = memberExpression.GetMemberName();
 
-            IEqualityIndex<T> index = _indexes.FirstOrDefault(i => i.MemberName == memberName);
+            IEqualityIndex<T> index = _indexes.Find(i => i.MemberName == memberName);
 
             if (index == null)
             {
@@ -397,13 +394,11 @@ namespace MultiIndexCollection
 
             if (leftMemberName == rightMemberName)
             {
-                IComparsionIndex<T> index = _indexes
-                    .OfType<IComparsionIndex<T>>()
-                    .FirstOrDefault(i => i.MemberName == leftMemberName);
+                var index = (IComparsionIndex<T>)_indexes
+                    .Find(i => i.MemberName == leftMemberName && i is IComparsionIndex<T>);
 
                 if (index != null)
                 {
-                    // TODO: add tests to cover all cases
                     switch (leftOperation.NodeType)
                     {
                         case ExpressionType.GreaterThan:

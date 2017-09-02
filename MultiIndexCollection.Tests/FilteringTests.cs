@@ -206,6 +206,8 @@ namespace MultiIndexCollection.Tests
             Assert.That.SetEquals(expected, actual);
         }
 
+        #region WhereBeetween
+
         [TestMethod]
         public void WhereBeetween()
         {
@@ -226,6 +228,155 @@ namespace MultiIndexCollection.Tests
 
             Assert.That.SetEquals(expected, actual);
         }
+
+        [TestMethod]
+        public void WhereBeetweenGreaterExclusive()
+        {
+            var users = new[]
+            {
+                new User { Name = "John", Age = 15 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Bob", Age = 35 },
+                new User { Name = "Sara", Age = 40 },
+            };
+
+            var expected = users.Where(u => u.Age >= 20 && u.Age < 35);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age >= 20 && u.Age < 35);
+
+            Assert.That.SetEquals(expected, actual);
+        }
+
+        [TestMethod]
+        public void WhereBeetweenLessExclusive()
+        {
+            var users = new[]
+            {
+                new User { Name = "John", Age = 15 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Bob", Age = 35 },
+                new User { Name = "Sara", Age = 40 },
+            };
+
+            var expected = users.Where(u => u.Age > 20 && u.Age <= 35);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age > 20 && u.Age <= 35);
+
+            Assert.That.SetEquals(expected, actual);
+        }
+
+        [TestMethod]
+        public void WhereBeetweenExclusive()
+        {
+            var users = new[]
+            {
+                new User { Name = "John", Age = 15 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Bob", Age = 35 },
+                new User { Name = "Sara", Age = 40 },
+            };
+
+            var expected = users.Where(u => u.Age > 20 && u.Age < 35);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age > 20 && u.Age < 35);
+
+            Assert.That.SetEquals(expected, actual);
+        }
+
+        [TestMethod]
+        public void WhereBeetweenInclusive()
+        {
+            var users = new[]
+            {
+                new User { Name = "John", Age = 15 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Bob", Age = 35 },
+                new User { Name = "Sara", Age = 40 },
+            };
+
+            var expected = users.Where(u => u.Age <= 35 && u.Age >= 20);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age <= 35 && u.Age >= 20);
+
+            Assert.That.SetEquals(expected, actual);
+        }
+
+        [TestMethod]
+        public void WhereBeetweenGreaterInclusive()
+        {
+            var users = new[]
+            {
+                new User { Name = "John", Age = 15 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Bob", Age = 35 },
+                new User { Name = "Sara", Age = 40 },
+            };
+
+            var expected = users.Where(u => u.Age <= 35 && u.Age > 20);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age <= 35 && u.Age > 20);
+
+            Assert.That.SetEquals(expected, actual);
+        }
+
+        [TestMethod]
+        public void WhereBeetweenLessInclusive()
+        {
+            var users = new[]
+            {
+                new User { Name = "John", Age = 15 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Bob", Age = 35 },
+                new User { Name = "Sara", Age = 40 },
+            };
+
+            var expected = users.Where(u => u.Age < 35 && u.Age >= 20);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age < 35 && u.Age >= 20);
+
+            Assert.That.SetEquals(expected, actual);
+        }
+
+        [TestMethod]
+        public void WhereBeetweenExclusiveReverse()
+        {
+            var users = new[]
+            {
+                new User { Name = "John", Age = 15 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Alice", Age = 30 },
+                new User { Name = "Bob", Age = 35 },
+                new User { Name = "Sara", Age = 40 },
+            };
+
+            var expected = users.Where(u => u.Age < 35 && u.Age > 20);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.Where(u => u.Age < 35 && u.Age > 20);
+
+            Assert.That.SetEquals(expected, actual);
+        }
+
+        #endregion
 
         [TestMethod]
         public void WhereStringStartsWith()
