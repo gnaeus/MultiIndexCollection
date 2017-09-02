@@ -86,7 +86,7 @@ namespace MultiIndexCollection
 
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />
-        private IComparsionIndex<T> GetComparsionIndex(Expression memberExpression)
+        private IComparsionIndex<T> FindComparsionIndex(Expression memberExpression)
         {
             string memberName = memberExpression.GetMemberName();
 
@@ -101,6 +101,25 @@ namespace MultiIndexCollection
             }
 
             return index;
+        }
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        private ILookup<TProperty, T> FindLookup<TProperty>(Expression memberExpression)
+        {
+            string memberName = memberExpression.GetMemberName();
+
+            ILookup<TProperty, T> lookup = _indexes
+                .Where(i => i.MemberName == memberName)
+                .OfType<ILookup<TProperty, T>>()
+                .FirstOrDefault();
+
+            if (lookup == null)
+            {
+                throw new InvalidOperationException($"There is no index for property '{memberName}'");
+            }
+
+            return lookup;
         }
 
         #region LINQ Methods
@@ -128,7 +147,15 @@ namespace MultiIndexCollection
             return Filter(predicate.Body).FirstOrDefault();
         }
 
-        // TODO: maybe GroupBy ?
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public ILookup<TProperty, T> GroupBy<TProperty>(Expression<Func<T, TProperty>> property)
+        {
+            if (property == null) throw new ArgumentNullException(nameof(property));
+
+            return FindLookup<TProperty>(property.Body);
+        }
+
         // TODO: maybe GroupJoin ?
         // TODO: maybe Join ?
 
@@ -138,7 +165,7 @@ namespace MultiIndexCollection
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
 
-            IComparsionIndex<T> index = GetComparsionIndex(property.Body);
+            IComparsionIndex<T> index = FindComparsionIndex(property.Body);
 
             return index.HavingMax();
         }
@@ -149,7 +176,7 @@ namespace MultiIndexCollection
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
 
-            IComparsionIndex<T> index = GetComparsionIndex(property.Body);
+            IComparsionIndex<T> index = FindComparsionIndex(property.Body);
 
             return index.HavingMin();
         }
@@ -187,7 +214,7 @@ namespace MultiIndexCollection
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
 
-            IComparsionIndex<T> index = GetComparsionIndex(property.Body);
+            IComparsionIndex<T> index = FindComparsionIndex(property.Body);
 
             return (TProperty)index.Max();
         }
@@ -198,7 +225,7 @@ namespace MultiIndexCollection
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
 
-            IComparsionIndex<T> index = GetComparsionIndex(property.Body);
+            IComparsionIndex<T> index = FindComparsionIndex(property.Body);
 
             return (TProperty)index.Min();
         }
@@ -209,7 +236,7 @@ namespace MultiIndexCollection
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
 
-            return GetComparsionIndex(property.Body);   
+            return FindComparsionIndex(property.Body);   
         }
 
         /// <exception cref="NotSupportedException" />
@@ -218,7 +245,7 @@ namespace MultiIndexCollection
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
 
-            return GetComparsionIndex(property.Body).Reverse();
+            return FindComparsionIndex(property.Body).Reverse();
         }
         
         /// <exception cref="NotSupportedException" />
@@ -245,19 +272,7 @@ namespace MultiIndexCollection
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
 
-            string memberName = property.Body.GetMemberName();
-
-            ILookup<TProperty, T> lookup = _indexes
-                .Where(i => i.MemberName == memberName)
-                .OfType<ILookup<TProperty, T>>()
-                .FirstOrDefault();
-
-            if (lookup == null)
-            {
-                throw new InvalidOperationException($"There is no index for property '{memberName}'");
-            }
-
-            return lookup;
+            return FindLookup<TProperty>(property.Body);
         }
 
         /// <exception cref="NotSupportedException" />
@@ -275,19 +290,19 @@ namespace MultiIndexCollection
 
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />
-        private IEnumerable<T> Filter(Expression node)
+        private IEnumerable<T> Filter(Expression body)
         {
-            if (node is MethodCallExpression methodCall)
+            if (body is MethodCallExpression methodCall)
             {
                 return FilterStringStartsWith(methodCall);
             }
 
-            var binary = node as BinaryExpression;
+            var binary = body as BinaryExpression;
 
             if (binary == null)
             {
                 throw new NotSupportedException(
-                    $"Predicate body {node} should be Binary Expression");
+                    $"Predicate body {body} should be Binary Expression");
             }
 
             switch (binary.NodeType)
@@ -309,7 +324,7 @@ namespace MultiIndexCollection
 
                 default:
                     throw new NotSupportedException(
-                        $"Predicate body {node} should be Equality or Comparsion");
+                        $"Predicate body {body} should be Equality or Comparsion");
             }
         }
 
@@ -334,7 +349,7 @@ namespace MultiIndexCollection
         private IEnumerable<T> FilterComparsion(
             Expression memberExpression, Expression keyExpression, ExpressionType type)
         {
-            IComparsionIndex<T> index = GetComparsionIndex(memberExpression);
+            IComparsionIndex<T> index = FindComparsionIndex(memberExpression);
 
             object key = keyExpression.GetValue();
 
@@ -388,6 +403,7 @@ namespace MultiIndexCollection
 
                 if (index != null)
                 {
+                    // TODO: add tests to cover all cases
                     switch (leftOperation.NodeType)
                     {
                         case ExpressionType.GreaterThan:
@@ -463,7 +479,7 @@ namespace MultiIndexCollection
             if (methodCall.Method.DeclaringType == typeof(String) &&
                 methodCall.Method.Name == nameof(String.StartsWith))
             {
-                IComparsionIndex<T> index = GetComparsionIndex(methodCall.Object);
+                IComparsionIndex<T> index = FindComparsionIndex(methodCall.Object);
 
                 string keyFrom = (string)methodCall.Arguments.First().GetValue();
 

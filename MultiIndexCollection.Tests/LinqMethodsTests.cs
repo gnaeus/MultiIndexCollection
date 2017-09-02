@@ -8,6 +8,70 @@ namespace MultiIndexCollection.Tests
     public class LinqMethodsTests
     {
         [TestMethod]
+        public void GroupBy()
+        {
+            var users = new[]
+            {
+                new User { Name = "Alice", Age = null },
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Sara", Age = 30 },
+                new User { Name = "Ted", Age = null },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Bob", Age = 30 },
+            };
+
+            var expected = users.GroupBy(u => u.Age);
+
+            var indexed = users.IndexBy(u => u.Age);
+
+            var actual = indexed.GroupBy(u => u.Age);
+            
+            Assert.That.SequenceEquals(
+                expected.OrderBy(g => g.Key).Select(g => g.Key),
+                actual.OrderBy(g => g.Key).Select(g => g.Key));
+
+            expected
+                .OrderBy(g => g.Key)
+                .Zip(actual.OrderBy(g => g.Key),
+                    (exp, act) => new { exp, act })
+                .ToList()
+                .ForEach(pair => Assert.That
+                    .SetEquals(pair.exp, pair.act));
+        }
+
+        [TestMethod]
+        public void GroupBySorted()
+        {
+            var users = new[]
+            {
+                new User { Name = "Alice", Age = null },
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Sara", Age = 30 },
+                new User { Name = "Ted", Age = null },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Bob", Age = 30 },
+            };
+
+            var expected = users.GroupBy(u => u.Age);
+
+            var indexed = users.IndexBy(u => u.Age, true);
+
+            var actual = indexed.GroupBy(u => u.Age);
+            
+            Assert.That.SequenceEquals(
+                expected.OrderBy(g => g.Key).Select(g => g.Key),
+                actual.OrderBy(g => g.Key).Select(g => g.Key));
+
+            expected
+                .OrderBy(g => g.Key)
+                .Zip(actual.OrderBy(g => g.Key),
+                    (exp, act) => new { exp, act })
+                .ToList()
+                .ForEach(pair => Assert.That
+                    .SetEquals(pair.exp, pair.act));
+        }
+
+        [TestMethod]
         public void HavingMax()
         {
             var users = new[]
