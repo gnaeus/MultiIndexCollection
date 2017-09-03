@@ -72,6 +72,36 @@ namespace MultiIndexCollection.Tests
         }
 
         [TestMethod]
+        public void GroupJoin()
+        {
+            var users = new[]
+            {
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Sara", Age = 30 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Bob", Age = 30 },
+            };
+
+            var expected = users.GroupJoin(users,
+                    o => o.Age, i => i.Age,
+                    (o, i) => (o.Age, Count: i.Count()))
+                .OrderBy(t => t.Age)
+                .ThenBy(t => t.Count)
+                .ToArray();
+
+            var indexed = users.IndexBy(u => u.Age);
+
+            var actual = indexed.GroupJoin(users,
+                    i => i.Age, o => o.Age,
+                    (i, o) => (o.Age, Count: i.Count()))
+                .OrderBy(t => t.Age)
+                .ThenBy(t => t.Count)
+                .ToArray();
+
+            Assert.That.SequenceEquals(expected, actual);
+        }
+
+        [TestMethod]
         public void HavingMax()
         {
             var users = new[]
@@ -109,6 +139,40 @@ namespace MultiIndexCollection.Tests
             var actual = indexed.HavingMin(u => u.Age);
 
             Assert.That.SetEquals(expected, actual);
+        }
+
+        [TestMethod]
+        public void Join()
+        {
+            var users = new[]
+            {
+                new User { Name = "John", Age = 20 },
+                new User { Name = "Sara", Age = 30 },
+                new User { Name = "Fred", Age = 20 },
+                new User { Name = "Bob", Age = 30 },
+            };
+
+            var expected = users.Join(users,
+                    o => o.Age, i => i.Age,
+                    (o, i) => (Left: o, Right: i))
+                .OrderBy(t => t.Left.Age)
+                .ThenBy(t => t.Left.Name)
+                .ThenBy(t => t.Right.Age)
+                .ThenBy(t => t.Right.Name)
+                .ToArray();
+
+            var indexed = users.IndexBy(u => u.Age);
+
+            var actual = indexed.Join(users,
+                    i => i.Age, o => o.Age,
+                    (i, o) => (Left: o, Right: i))
+                .OrderBy(t => t.Left.Age)
+                .ThenBy(t => t.Left.Name)
+                .ThenBy(t => t.Right.Age)
+                .ThenBy(t => t.Right.Name)
+                .ToArray();
+
+            Assert.That.SequenceEquals(expected, actual);
         }
 
         [TestMethod]

@@ -107,13 +107,30 @@ namespace MultiIndexCollection
         private ILookup<TProperty, T> FindLookup<TProperty>(Expression memberExpression)
         {
             string memberName = memberExpression.GetMemberName();
-
+            
             var lookup = (ILookup<TProperty, T>)_indexes
                 .Find(i => i.MemberName == memberName && i is ILookup<TProperty, T>);
 
             if (lookup == null)
             {
                 throw new InvalidOperationException($"There is no index for property '{memberName}'");
+            }
+
+            return lookup;
+        }
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        private ILookup<TProperty, T> FindEqualityLookup<TProperty>(Expression memberExpression)
+        {
+            string memberName = memberExpression.GetMemberName();
+
+            var lookup = (ILookup<TProperty, T>)_indexes
+                .Find(i => i.MemberName == memberName && i is EqualityIndex<T, TProperty>);
+
+            if (lookup == null)
+            {
+                throw new InvalidOperationException($"There is no equality index for property '{memberName}'");
             }
 
             return lookup;
@@ -153,8 +170,52 @@ namespace MultiIndexCollection
             return FindLookup<TProperty>(property.Body);
         }
 
-        // TODO: maybe GroupJoin ?
-        // TODO: maybe Join ?
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public IEnumerable<TResult> GroupJoin<TOuter, TKey, TResult>(
+            IEnumerable<TOuter> outerEnumerable,
+            Expression<Func<T, TKey>> innerKeySelector,
+            Func<TOuter, TKey> outerKeySelector,
+            Func<IEnumerable<T>, TOuter, TResult> resultSelector)
+        {
+            if (outerEnumerable == null) throw new ArgumentNullException(nameof(outerEnumerable));
+            if (innerKeySelector == null) throw new ArgumentNullException(nameof(innerKeySelector));
+            if (outerKeySelector == null) throw new ArgumentNullException(nameof(outerKeySelector));
+            if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
+
+            ILookup<TKey, T> lookup = FindEqualityLookup<TKey>(innerKeySelector.Body);
+
+            foreach (TOuter outer in outerEnumerable)
+            {
+                IEnumerable<T> innerEnumerable = lookup[outerKeySelector.Invoke(outer)];
+
+                yield return resultSelector.Invoke(innerEnumerable, outer);
+            }
+        }
+
+        /// <exception cref="NotSupportedException" />
+        /// <exception cref="InvalidOperationException" />
+        public IEnumerable<TResult> Join<TOuter, TKey, TResult>(
+            IEnumerable<TOuter> outerEnumerable,
+            Expression<Func<T, TKey>> innerKeySelector,
+            Func<TOuter, TKey> outerKeySelector,
+            Func<T, TOuter, TResult> resultSelector)
+        {
+            if (outerEnumerable == null) throw new ArgumentNullException(nameof(outerEnumerable));
+            if (innerKeySelector == null) throw new ArgumentNullException(nameof(innerKeySelector));
+            if (outerKeySelector == null) throw new ArgumentNullException(nameof(outerKeySelector));
+            if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
+
+            ILookup<TKey, T> lookup = FindEqualityLookup<TKey>(innerKeySelector.Body);
+
+            foreach (TOuter outer in outerEnumerable)
+            {
+                foreach (T inner in lookup[outerKeySelector.Invoke(outer)])
+                {
+                    yield return resultSelector.Invoke(inner, outer);
+                }
+            }
+        }
 
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />
@@ -502,6 +563,18 @@ namespace MultiIndexCollection
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
 
+            AddOrUpdate(item);
+        }
+
+        public void Update(T item)
+        {
+            if (item == null) throw new ArgumentNullException(nameof(item));
+
+            AddOrUpdate(item);
+        }
+
+        private void AddOrUpdate(T item)
+        {
             if (_storage.TryGetValue(item, out List<object> indexKeys))
             {
                 for (int i = 0; i < _indexes.Count; i++)
@@ -557,20 +630,14 @@ namespace MultiIndexCollection
                 return false;
             }
         }
-
-        public void Update(T item)
-        {
-            if (item == null) throw new ArgumentNullException(nameof(item));
-
-            Add(item);
-        }
-
+        
         public void Clear()
         {
             foreach (IEqualityIndex<T> index in _indexes)
             {
                 _indexes.Clear();
             }
+
             _storage.Clear();
         }
 
