@@ -13,7 +13,7 @@ namespace MultiIndexCollection.Benchmarks
             public int Property { get; set; }
         }
 
-        [Params(1000, 10000, 100000)]
+        [Params(100, 1000, 10000, 100000)]
         public int Length { get; set; }
 
         [Params(3)]
@@ -21,7 +21,9 @@ namespace MultiIndexCollection.Benchmarks
 
         private IList<Entity> _outer;
         private IList<Entity> _inner;
-        private IndexedCollection<Entity> _indexed;
+
+        private IndexedCollection<Entity> _hashIndex;
+        private IndexedCollection<Entity> _sortedIndex;
 
         [GlobalSetup]
         public void GlobalSetup()
@@ -52,35 +54,73 @@ namespace MultiIndexCollection.Benchmarks
 
             _inner.Shuffle();
 
-            _indexed = _inner.IndexBy(e => e.Property);
+            _hashIndex = _inner.IndexBy(e => e.Property);
+
+            _sortedIndex = _inner.IndexBy(e => e.Property, true);
         }
 
         [Benchmark]
         public int LinqJoin()
         {
-            int sum = 0;
-
-            _outer
+            return _outer
                 .Join(_inner,
                     o => o.Property, i => i.Property,
                     (o, i) => o.Property + i.Property)
-                .ForEach(n => { sum += n; });
-
-            return sum;
+                .Sum();
         }
 
         [Benchmark]
         public int IndexedJoin()
         {
-            int sum = 0;
-
-            _indexed
+            return _hashIndex
                 .Join(_outer,
                     i => i.Property, o => o.Property,
                     (i, o) => i.Property + o.Property)
-                .ForEach(n => { sum += n; });
+                .Sum();
+        }
 
-            return sum;
+        [Benchmark]
+        public int LinqGroupJoin()
+        {
+            return _outer
+                .GroupJoin(_inner,
+                    o => o.Property, i => i.Property,
+                    (o, i) => o.Property + i.Sum(e => e.Property))
+                .Sum();
+        }
+
+        [Benchmark]
+        public int IndexedGroupJoin()
+        {
+            return _hashIndex
+                .GroupJoin(_outer,
+                    i => i.Property, o => o.Property,
+                    (i, o) => i.Sum(e => e.Property) + o.Property)
+                .Sum();
+        }
+
+        [Benchmark]
+        public int LinqOrderBy()
+        {
+            return _inner.OrderBy(e => e.Property).Sum(e => e.Property);
+        }
+
+        [Benchmark]
+        public int IndexedOrderBy()
+        {
+            return _sortedIndex.OrderBy(e => e.Property).Sum(e => e.Property);
+        }
+
+        [Benchmark]
+        public int LinqOrderByDescending()
+        {
+            return _inner.OrderByDescending(e => e.Property).Sum(e => e.Property);
+        }
+
+        [Benchmark]
+        public int IndexedOrderByDescending()
+        {
+            return _sortedIndex.OrderByDescending(e => e.Property).Sum(e => e.Property);
         }
     }
 }
