@@ -97,12 +97,12 @@ namespace MultiIndexCollection
 
             if (excludeFrom)
             {
-                range = range.SkipWhile(pair => Equals(pair.Key, keyFrom));
+                range = range.SkipWhile(pair => Comparer.Compare(pair, pairFrom) == 0);
             }
 
             if (excludeTo)
             {
-                range = range.TakeWhile(pair => !Equals(pair.Key, keyTo));
+                range = range.TakeWhile(pair => Comparer.Compare(pair, pairTo) < 0);
             }
 
             foreach (var pair in range)
