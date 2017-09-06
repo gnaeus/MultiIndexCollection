@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -34,6 +36,19 @@ namespace MultiIndexCollection
             _indexes = new List<IEqualityIndex<T>>(2);
 
             _storage = enumerable.ToDictionary(item => item, _ => new List<object>(2));
+
+            foreach (var pair in _storage)
+            {
+                if (pair.Key is INotifyPropertyChanged observable)
+                {
+                    observable.PropertyChanged += OnPropertyChanged;
+                }
+            }
+
+            if (enumerable is INotifyCollectionChanged observableCollection)
+            {
+                observableCollection.CollectionChanged += OnCollectionChanged;
+            }
         }
 
         #region Indexing
@@ -583,7 +598,7 @@ namespace MultiIndexCollection
                     object currentKey = index.GetKey(item);
                     object lastKey = indexKeys[i];
 
-                    if (lastKey != currentKey)
+                    if (!Equals(lastKey, currentKey))
                     {
                         indexKeys[i] = currentKey;
                         index.Remove(lastKey, item);
@@ -604,6 +619,11 @@ namespace MultiIndexCollection
                 }
 
                 _storage.Add(item, indexKeys);
+
+                if (item is INotifyPropertyChanged observable)
+                {
+                    observable.PropertyChanged += OnPropertyChanged;
+                }
             }
         }
 
@@ -623,6 +643,11 @@ namespace MultiIndexCollection
 
                 _storage.Remove(item);
 
+                if (item is INotifyPropertyChanged observable)
+                {
+                    observable.PropertyChanged -= OnPropertyChanged;
+                }
+
                 return true;
             }
             else
@@ -635,10 +660,90 @@ namespace MultiIndexCollection
         {
             foreach (IEqualityIndex<T> index in _indexes)
             {
-                _indexes.Clear();
+                index.Clear();
+            }
+
+            foreach (var pair in _storage)
+            {
+                if (pair.Key is INotifyPropertyChanged observable)
+                {
+                    observable.PropertyChanged -= OnPropertyChanged;
+                }
             }
 
             _storage.Clear();
+        }
+
+        private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            int pointer = _indexes.FindIndex(i => i.MemberName == e.PropertyName);
+
+            if (pointer != -1 && sender is T item &&
+                _storage.TryGetValue(item, out List<object> indexKeys))
+            {
+                IEqualityIndex<T> index = _indexes[pointer];
+                object currentKey = index.GetKey(item);
+                object lastKey = indexKeys[pointer];
+
+                indexKeys[pointer] = currentKey;
+                index.Remove(lastKey, item);
+                index.Add(currentKey, item);
+            }
+        }
+
+        private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    AddItems(e.NewItems);
+                    break;
+                case NotifyCollectionChangedAction.Remove:
+                    RemoveItems(e.OldItems);
+                    break;
+                case NotifyCollectionChangedAction.Replace:
+                    RemoveItems(e.OldItems);
+                    AddItems(e.NewItems);
+                    break;
+                case NotifyCollectionChangedAction.Reset:
+                    ResetItems(sender);
+                    break;
+            }
+        }
+
+        private void AddItems(IEnumerable newItems)
+        {
+            foreach (object newItem in newItems)
+            {
+                if (newItem is T item)
+                {
+                    AddOrUpdate(item);
+                }
+            }
+        }
+
+        private void RemoveItems(IEnumerable oldItems)
+        {
+            foreach (object oldItem in oldItems)
+            {
+                if (oldItem is T item)
+                {
+                    Remove(item);
+                }
+            }
+        }
+
+        private void ResetItems(object sender)
+        {
+            Clear();
+
+            if (sender is IEnumerable<T> items)
+            {
+                foreach (T item in items)
+                {
+                    AddOrUpdate(item);
+                }
+            }
         }
 
         #endregion
