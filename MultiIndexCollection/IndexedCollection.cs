@@ -8,27 +8,46 @@ using System.Linq.Expressions;
 
 namespace MultiIndexCollection
 {
+    /// <summary>
+    /// Generic collection with support for indexing by multiple properties.
+    /// </summary>
+    /// <typeparam name="T"> The type of elements in the collection. </typeparam>
     public class IndexedCollection<T> : ICollection<T>, IReadOnlyCollection<T>, ICollection
     {
         readonly List<IEqualityIndex<T>> _indexes;
 
         readonly Dictionary<T, List<object>> _storage;
 
+        /// <summary>
+        /// Gets the number of elements contained in the <see cref="IndexedCollection{T}"/>.
+        /// </summary>
+        /// <returns>
+        /// The number of elements contained in the <see cref="IndexedCollection{T}"/>.
+        /// </returns>
         public int Count => _storage.Count;
-
+        
         bool ICollection<T>.IsReadOnly => false;
-
+        
         bool ICollection.IsSynchronized => false;
-
+        
         object ICollection.SyncRoot => ((ICollection)_storage).SyncRoot;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="IndexedCollection{T}"/> that is empty.
+        /// </summary>
         public IndexedCollection()
         {
             _indexes = new List<IEqualityIndex<T>>(2);
 
             _storage = new Dictionary<T, List<object>>();
         }
-        
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="IndexedCollection{T}"/> that
+        /// contains elements copied from the specified <paramref name="enumerable"/>.
+        /// </summary>
+        /// <param name="enumerable"> The enumerable whose elements are copied to the new collection. </param>
+        /// <exception cref="ArgumentNullException"> <paramref name="enumerable"/> is null. </exception>
         public IndexedCollection(IEnumerable<T> enumerable)
         {
             if (enumerable == null) throw new ArgumentNullException(nameof(enumerable));
@@ -53,7 +72,15 @@ namespace MultiIndexCollection
 
         #region Indexing
 
-        /// <exception cref="NotSupportedException" />
+        /// <summary>
+        /// Add an index to the <see cref="IndexedCollection{T}"/>.
+        /// </summary>
+        /// <typeparam name="TProperty"> The type of the property <paramref name="property"/>. </typeparam>
+        /// <param name="property"> An expression to locate property in collection element. </param>
+        /// <param name="isSorted"> Should index be sorted or not. </param>
+        /// <returns> This instance of <see cref="IndexedCollection{T}"/>. </returns>
+        /// <exception cref="ArgumentNullException"> <paramref name="property"/> is null. </exception>
+        /// <exception cref="NotSupportedException"> Expression <paramref name="property"/> is not a Member Access. </exception>
         public IndexedCollection<T> IndexBy<TProperty>(
             Expression<Func<T, TProperty>> property, bool isSorted = false)
         {
@@ -71,7 +98,13 @@ namespace MultiIndexCollection
             return this;
         }
 
-        /// <exception cref="NotSupportedException" />
+        /// <summary>
+        /// Add an index that performs a case-insensitive ordinal string comparison to the <see cref="IndexedCollection{T}"/>.
+        /// </summary>
+        /// <param name="property"> An expression to locate string property in collection element. </param>
+        /// <returns> This instance of <see cref="IndexedCollection{T}"/>. </returns>
+        /// <exception cref="ArgumentNullException"> <paramref name="property"/> is null. </exception>
+        /// <exception cref="NotSupportedException"> Expression <paramref name="property"/> is not a Member Access. </exception>
         public IndexedCollection<T> IndexByIgnoreCase(Expression<Func<T, string>> property)
         {
             if (property == null) throw new ArgumentNullException(nameof(property));
@@ -545,7 +578,7 @@ namespace MultiIndexCollection
 
         /// <exception cref="NotSupportedException" />
         /// <exception cref="InvalidOperationException" />
-        public IEnumerable<T> FilterStringStartsWith(MethodCallExpression methodCall)
+        private IEnumerable<T> FilterStringStartsWith(MethodCallExpression methodCall)
         {
             if (methodCall.Method.DeclaringType == typeof(String) &&
                 methodCall.Method.Name == nameof(String.StartsWith))
@@ -574,6 +607,11 @@ namespace MultiIndexCollection
 
         #region Updating
 
+        /// <summary>
+        /// Adds an element to the <see cref="IndexedCollection{T}"/>.
+        /// </summary>
+        /// <param name="item"> The element to add to the <see cref="IndexedCollection{T}"/>. </param>
+        /// <exception cref="ArgumentNullException"> <paramref name="item"/> is null. </exception>
         public void Add(T item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
@@ -581,6 +619,12 @@ namespace MultiIndexCollection
             AddOrUpdate(item);
         }
 
+        /// <summary>
+        /// Apply changes in indexed properties of the specified <paramref name="item"/>
+        /// to the <see cref="IndexedCollection{T}"/> indexes.
+        /// </summary>
+        /// <param name="item"> The element to update. </param>
+        /// <exception cref="ArgumentNullException"> <paramref name="item"/> is null. </exception>
         public void Update(T item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
@@ -627,6 +671,15 @@ namespace MultiIndexCollection
             }
         }
 
+        /// <summary>
+        /// Removes the specified element from a <see cref="IndexedCollection{T}"/>.
+        /// </summary>
+        /// <param name="item"> The element to remove. </param>
+        /// <returns>
+        /// true if the element is successfully found and removed; otherwise, false.
+        /// This method returns false if item is not found in the <see cref="IndexedCollection{T}"/>.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"> <paramref name="item"/> is null. </exception>
         public bool Remove(T item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
@@ -655,7 +708,10 @@ namespace MultiIndexCollection
                 return false;
             }
         }
-        
+
+        /// <summary>
+        /// Removes all items from the <see cref="IndexedCollection{T}"/>.
+        /// </summary>
         public void Clear()
         {
             foreach (IEqualityIndex<T> index in _indexes)
@@ -748,16 +804,43 @@ namespace MultiIndexCollection
 
         #endregion
 
+        /// <summary>
+        /// Determines whether the <see cref="IndexedCollection{T}"/> contains a specific value.
+        /// </summary>
+        /// <param name="item"> The object to locate in the <see cref="IndexedCollection{T}"/>. </param>
+        /// <returns> true if item is found in the <see cref="IndexedCollection{T}"/>; otherwise, false. </returns>
+        /// <exception cref="ArgumentNullException"> <paramref name="item"/> is null. </exception>
         public bool Contains(T item)
         {
             return _storage.ContainsKey(item);
         }
 
+        /// <summary>
+        /// Copies the elements of the <see cref="IndexedCollection{T}"/> to an <see cref="Array"/>
+        /// starting at a particular <see cref="Array"/> index.
+        /// </summary>
+        /// <param name="array">
+        /// The one-dimensional <see cref="Array"/> that is the destination of the elements copied from
+        /// <see cref="IndexedCollection{T}"/>. The <see cref="Array"/> must have zero-based indexing.
+        /// </param>
+        /// <param name="arrayIndex">The zero-based index in array at which copying begins.</param>
+        /// <exception cref="ArgumentNullException"> <paramref name="array"/> is null. </exception>
+        /// <exception cref="ArgumentOutOfRangeException"> <paramref name="arrayIndex"/> is less than 0. </exception>
+        /// <exception cref="ArgumentException">
+        /// The number of elements in the source <see cref="IndexedCollection{T}"/> is greater than
+        /// the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
+        /// </exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
             _storage.Keys.CopyTo(array, arrayIndex);
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>
+        /// An enumerator that can be used to iterate through the collection.
+        /// </returns>
         public IEnumerator<T> GetEnumerator()
         {
             return _storage.Keys.GetEnumerator();
@@ -767,7 +850,7 @@ namespace MultiIndexCollection
         {
             return GetEnumerator();
         }
-
+        
         void ICollection.CopyTo(Array array, int index)
         {
             ((ICollection)_storage.Keys).CopyTo(array, index);
