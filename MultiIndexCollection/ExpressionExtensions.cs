@@ -45,7 +45,7 @@ namespace MultiIndexCollection
 
             try
             {
-                return getterLambda.CompileFast().Invoke();
+                return getterLambda.Compile().Invoke();
             }
             catch (InvalidOperationException exception)
             {
