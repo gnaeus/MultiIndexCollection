@@ -74,15 +74,17 @@ namespace MultiIndexCollection.Benchmarks
         [Benchmark]
         public Product LinqFirstOrDefault()
         {
-            _id = (_id + 1) % _maxId;
-            return _list.FirstOrDefault(p => p.Id == _id);
+            int id = _id = (_id + 1) % _maxId;
+
+            return _list.FirstOrDefault(p => p.Id == id);
         }
 
         [Benchmark]
         public Product IndexedFirstOrDefault()
         {
-            _id = (_id + 1) % _maxId;
-            return _indexed.FirstOrDefault(p => p.Id == _id);
+            int id = _id = (_id + 1) % _maxId;
+
+            return _indexed.FirstOrDefault(p => p.Id == id);
         }
 
         private int _code = 0;
@@ -90,17 +92,17 @@ namespace MultiIndexCollection.Benchmarks
         [Benchmark]
         public Product LinqExactMatch()
         {
-            _code = (_code + 1) % _maxCode;
+            int code = _code = (_code + 1) % _maxCode;
 
-            return _list.Where(p => p.Code == _code).Enumerate();
+            return _list.Where(p => p.Code == code).Enumerate();
         }
         
         [Benchmark]
         public Product IndexedExactMatch()
         {
-            _code = (_code + 1) % _maxCode;
+            int code = _code = (_code + 1) % _maxCode;
 
-            return _indexed.Where(p => p.Code == _code).Enumerate();
+            return _indexed.Where(p => p.Code == code).Enumerate();
         }
 
         int _pricePercentage = 0;

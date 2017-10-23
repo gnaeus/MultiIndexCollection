@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.10
+VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MultiIndexCollection", "MultiIndexCollection\MultiIndexCollection.csproj", "{1BBA7F2A-813D-494B-B403-76A1B241E292}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiIndexCollection.Tests", "MultiIndexCollection.Tests\MultiIndexCollection.Tests.csproj", "{AC3AC917-470A-4FBC-B23F-2639119C66F4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MultiIndexCollection.Tests", "MultiIndexCollection.Tests\MultiIndexCollection.Tests.csproj", "{AC3AC917-470A-4FBC-B23F-2639119C66F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiIndexCollection.Benchmarks", "MultiIndexCollection.Benchmarks\MultiIndexCollection.Benchmarks.csproj", "{C52E0D09-DB22-4035-AF5C-24656F3D521C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiIndexCollection.Benchmarks", "MultiIndexCollection.Benchmarks\MultiIndexCollection.Benchmarks.csproj", "{DFB2B3D9-EE72-496E-BD17-8E05A9A0631A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{AC3AC917-470A-4FBC-B23F-2639119C66F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC3AC917-470A-4FBC-B23F-2639119C66F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC3AC917-470A-4FBC-B23F-2639119C66F4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C52E0D09-DB22-4035-AF5C-24656F3D521C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C52E0D09-DB22-4035-AF5C-24656F3D521C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C52E0D09-DB22-4035-AF5C-24656F3D521C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C52E0D09-DB22-4035-AF5C-24656F3D521C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DFB2B3D9-EE72-496E-BD17-8E05A9A0631A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFB2B3D9-EE72-496E-BD17-8E05A9A0631A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFB2B3D9-EE72-496E-BD17-8E05A9A0631A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFB2B3D9-EE72-496E-BD17-8E05A9A0631A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
