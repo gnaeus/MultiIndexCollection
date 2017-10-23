@@ -5,20 +5,18 @@ using BenchmarkDotNet.Attributes;
 
 namespace MultiIndexCollection.Benchmarks
 {
-    [MemoryDiagnoser]
+    // [MemoryDiagnoser]
     public class LinqMethodsBenchmark
     {
-        class Entity
+        public class Entity
         {
             public int Property { get; set; }
         }
 
-        [Params(100, 300, 1000, 3000, 10000, 30000, 100000, 300000, 1000000)]
+        // [Params(100, 300, 1000, 3000, 10000, 30000, 100000, 300000, 1000000)]
+        [Params(300, 3000, 30000, 300000)]
         public int Length { get; set; }
-
-        [Params(3)]
-        public int MaxDuplicates { get; set; }
-
+        
         private IList<Entity> _outer;
         private IList<Entity> _list;
 
@@ -29,18 +27,22 @@ namespace MultiIndexCollection.Benchmarks
         private ILookup<int, Entity> _hashLookup;
         private ILookup<int, Entity> _sortedLookup;
 
-        private int _maxNumber = 0;
+        private int _maxProperty = 0;
+        private const int _maxPropertyDuplicates = 3;
 
         [GlobalSetup]
         public void GlobalSetup()
         {
+
             var random = new Random();
 
             _outer = new List<Entity>(Length);
             
             for (int i = 0; i < Length && _outer.Count < Length; i++)
             {
-                for (int j = 0; j < random.Next(MaxDuplicates + 1); j++)
+                int duplicatesCount = random.Next(_maxPropertyDuplicates) + 1;
+
+                for (int j = 0; j < duplicatesCount; j++)
                 {
                     _outer.Add(new Entity { Property = i });
                 }
@@ -52,11 +54,13 @@ namespace MultiIndexCollection.Benchmarks
             
             for (int i = 0; i < Length && _list.Count < Length; i++)
             {
-                for (int j = 0; j < random.Next(MaxDuplicates + 1); j++)
+                int duplicatesCount = random.Next(_maxPropertyDuplicates) + 1;
+
+                for (int j = 0; j < duplicatesCount; j++)
                 {
                     _list.Add(new Entity { Property = i });
                 }
-                _maxNumber = i;
+                _maxProperty = i;
             }
 
             _list.Shuffle();
@@ -211,21 +215,21 @@ namespace MultiIndexCollection.Benchmarks
         [Benchmark]
         public bool LinqLookup()
         {
-            _i = (_i + 1) % _maxNumber;
+            _i = (_i + 1) % _maxProperty;
             return _lookup.Contains(_i);
         }
 
         [Benchmark]
         public bool HashIndexLookup()
         {
-            _i = (_i + 1) % _maxNumber;
+            _i = (_i + 1) % _maxProperty;
             return _hashLookup.Contains(_i);
         }
 
         [Benchmark]
         public bool SortedIndexLookup()
         {
-            _i = (_i + 1) % _maxNumber;
+            _i = (_i + 1) % _maxProperty;
             return _sortedLookup.Contains(_i);
         }
     }

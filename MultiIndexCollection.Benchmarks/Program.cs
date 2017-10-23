@@ -31,12 +31,14 @@ namespace MultiIndexCollection.Benchmarks
             }
         }
 
-        public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
+        public static T Enumerate<T>(this IEnumerable<T> enumerable)
         {
+            T last = default(T);
             foreach (T item in enumerable)
             {
-                action.Invoke(item);
+                last = item;
             }
+            return last;
         }
     }
 }

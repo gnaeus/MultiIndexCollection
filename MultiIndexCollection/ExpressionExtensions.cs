@@ -2,6 +2,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using FastExpressionCompiler;
 
 namespace MultiIndexCollection
 {
@@ -27,10 +28,12 @@ namespace MultiIndexCollection
                 {
                     var instance = (ConstantExpression)member.Expression;
 
-                    if (instance.Type.GetTypeInfo().IsDefined(typeof(CompilerGeneratedAttribute)))
+                    TypeInfo typeInfo = instance.Type.GetTypeInfo();
+
+                    if (typeInfo.IsDefined(typeof(CompilerGeneratedAttribute)))
                     {
-                        return instance.Type
-                            .GetField(member.Member.Name)
+                        return typeInfo
+                            .GetDeclaredField(member.Member.Name)
                             .GetValue(instance.Value);
                     }
                 }
@@ -42,7 +45,7 @@ namespace MultiIndexCollection
 
             try
             {
-                return getterLambda.Compile().Invoke();
+                return getterLambda.CompileFast().Invoke();
             }
             catch (InvalidOperationException exception)
             {
