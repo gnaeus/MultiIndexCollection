@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using FastExpressionCompiler;
 
 namespace MultiIndexCollection
 {
@@ -20,16 +19,9 @@ namespace MultiIndexCollection
         /// <exception cref="NotSupportedException" />
         public EqualityIndex(Expression<Func<T, TProperty>> lambda)
         {
-            var memberExpression = lambda.Body as MemberExpression;
+            MemberName = lambda.Body.GetMemberName();
 
-            if (memberExpression == null || memberExpression.NodeType != ExpressionType.MemberAccess)
-            {
-                throw new NotSupportedException($"Expression {lambda} is not a Member Access");
-            }
-
-            MemberName = memberExpression.Member.Name;
-
-            _getKey = lambda.CompileFast();
+            _getKey = lambda.Body.CreateGetter<T, TProperty>();
         }
 
         public object GetKey(T item)
