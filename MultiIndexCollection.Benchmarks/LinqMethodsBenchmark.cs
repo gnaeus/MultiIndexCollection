@@ -13,9 +13,8 @@ namespace MultiIndexCollection.Benchmarks
             public int Property { get; set; }
         }
 
-        // [Params(100, 300, 1000, 3000, 10000, 30000, 100000, 300000, 1000000)]
-        [Params(300, 3000, 30000, 300000)]
-        public int Length { get; set; }
+        [Params(100, 300, 1000, 3000, 10000, 30000, 100000, 300000, 1000000)]
+        public int Length { get; set; } = 10000;
         
         private IList<Entity> _outer;
         private IList<Entity> _list;
@@ -77,21 +76,21 @@ namespace MultiIndexCollection.Benchmarks
         }
 
         [Benchmark]
-        public int LinqGroupBy()
+        public object LinqGroupBy()
         {
-            return _list.GroupBy(e => e.Property).Sum(g => g.Key);
+            return _list.GroupBy(e => e.Property).Enumerate();
         }
 
         [Benchmark]
-        public int HashIndexGroupBy()
+        public object HashIndexGroupBy()
         {
-            return _hashIndexed.GroupBy(e => e.Property).Sum(g => g.Key);
+            return _hashIndexed.GroupBy(e => e.Property).Enumerate();
         }
 
         [Benchmark]
-        public int SortedIndexGroupBy()
+        public object SortedIndexGroupBy()
         {
-            return _sortedIndexed.GroupBy(e => e.Property).Sum(g => g.Key);
+            return _sortedIndexed.GroupBy(e => e.Property).Enumerate();
         }
 
         [Benchmark]
@@ -101,7 +100,7 @@ namespace MultiIndexCollection.Benchmarks
                 .GroupJoin(_list,
                     o => o.Property, i => i.Property,
                     (o, i) => o.Property + i.Sum(e => e.Property))
-                .Sum();
+                .Enumerate();
         }
 
         [Benchmark]
@@ -111,35 +110,35 @@ namespace MultiIndexCollection.Benchmarks
                 .GroupJoin(_outer,
                     i => i.Property, o => o.Property,
                     (i, o) => i.Sum(e => e.Property) + o.Property)
-                .Sum();
+                .Enumerate();
         }
 
         [Benchmark]
-        public int LinqHavingMax()
+        public Entity LinqHavingMax()
         {
             int max = _list.Max(e => e.Property);
 
-            return _list.Where(e => e.Property == max).Sum(e => e.Property);
+            return _list.Where(e => e.Property == max).Enumerate();
         }
 
         [Benchmark]
-        public int IndexedHavingMax()
+        public Entity IndexedHavingMax()
         {
-            return _sortedIndexed.HavingMax(e => e.Property).Sum(e => e.Property);
+            return _sortedIndexed.HavingMax(e => e.Property).Enumerate();
         }
 
         [Benchmark]
-        public int LinqHavingMin()
+        public Entity LinqHavingMin()
         {
             int min = _list.Min(e => e.Property);
 
-            return _list.Where(e => e.Property == min).Sum(e => e.Property);
+            return _list.Where(e => e.Property == min).Enumerate();
         }
 
         [Benchmark]
-        public int IndexedHavingMin()
+        public Entity IndexedHavingMin()
         {
-            return _sortedIndexed.HavingMin(e => e.Property).Sum(e => e.Property);
+            return _sortedIndexed.HavingMin(e => e.Property).Enumerate();
         }
 
         [Benchmark]
@@ -149,7 +148,7 @@ namespace MultiIndexCollection.Benchmarks
                 .Join(_list,
                     o => o.Property, i => i.Property,
                     (o, i) => o.Property + i.Property)
-                .Sum();
+                .Enumerate();
         }
 
         [Benchmark]
@@ -159,7 +158,7 @@ namespace MultiIndexCollection.Benchmarks
                 .Join(_outer,
                     i => i.Property, o => o.Property,
                     (i, o) => i.Property + o.Property)
-                .Sum();
+                .Enumerate();
         }
 
         [Benchmark]
@@ -187,27 +186,27 @@ namespace MultiIndexCollection.Benchmarks
         }
 
         [Benchmark]
-        public int LinqOrderBy()
+        public Entity LinqOrderBy()
         {
-            return _list.OrderBy(e => e.Property).Sum(e => e.Property);
+            return _list.OrderBy(e => e.Property).Enumerate();
         }
 
         [Benchmark]
-        public int IndexedOrderBy()
+        public Entity IndexedOrderBy()
         {
-            return _sortedIndexed.OrderBy(e => e.Property).Sum(e => e.Property);
+            return _sortedIndexed.OrderBy(e => e.Property).Enumerate();
         }
 
         [Benchmark]
-        public int LinqOrderByDescending()
+        public Entity LinqOrderByDescending()
         {
-            return _list.OrderByDescending(e => e.Property).Sum(e => e.Property);
+            return _list.OrderByDescending(e => e.Property).Enumerate();
         }
 
         [Benchmark]
-        public int IndexedOrderByDescending()
+        public Entity IndexedOrderByDescending()
         {
-            return _sortedIndexed.OrderByDescending(e => e.Property).Sum(e => e.Property);
+            return _sortedIndexed.OrderByDescending(e => e.Property).Enumerate();
         }
 
         private int _i = 0;

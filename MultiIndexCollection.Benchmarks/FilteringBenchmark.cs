@@ -16,10 +16,9 @@ namespace MultiIndexCollection.Benchmarks
             public decimal Price { get; set; }
         }
 
-        // [Params(100, 300, 1000, 3000, 10000, 30000, 100000, 300000, 1000000)]
-        [Params(300, 3000, 30000, 300000)]
-        public int Length { get; set; }
-        
+        [Params(100, 300, 1000, 3000, 10000, 30000, 100000, 300000, 1000000)]
+        public int Length { get; set; } = 10000;
+
         private List<Product> _list;
         private IndexedCollection<Product> _indexed;
 
