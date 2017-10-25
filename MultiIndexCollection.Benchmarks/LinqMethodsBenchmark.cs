@@ -41,7 +41,7 @@ namespace MultiIndexCollection.Benchmarks
             {
                 int duplicatesCount = random.Next(_maxPropertyDuplicates) + 1;
 
-                for (int j = 0; j < duplicatesCount; j++)
+                for (int j = 0; j < duplicatesCount && _outer.Count < Length; j++)
                 {
                     _outer.Add(new Entity { Property = i });
                 }
@@ -55,7 +55,7 @@ namespace MultiIndexCollection.Benchmarks
             {
                 int duplicatesCount = random.Next(_maxPropertyDuplicates) + 1;
 
-                for (int j = 0; j < duplicatesCount; j++)
+                for (int j = 0; j < duplicatesCount && _list.Count < Length; j++)
                 {
                     _list.Add(new Entity { Property = i });
                 }

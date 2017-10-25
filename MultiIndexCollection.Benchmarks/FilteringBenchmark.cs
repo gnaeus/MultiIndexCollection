@@ -44,7 +44,7 @@ namespace MultiIndexCollection.Benchmarks
 
                 int duplicatesCount = random.Next(_maxCodeDuplicates) + 1;
 
-                for (int j = 0; j < duplicatesCount; j++)
+                for (int j = 0; j < duplicatesCount && _list.Count < Length; j++)
                 {
                     string third = Words[random.Next(Words.Length)];
 
